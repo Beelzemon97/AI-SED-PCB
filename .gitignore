@@ -7,7 +7,7 @@ Backup of *
 ~$*
 *.tmp
 
-# Claves y secretos (NUNCA subir la API key de ProPilot)
+# Claves y secretos
 .env
 *.key
 *secret*
