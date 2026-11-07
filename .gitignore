@@ -1,0 +1,19 @@
+# Proteus: copias de seguridad y archivos temporales
+Project Backups/
+Last Loaded *.pdsprj
+*.pdsbak
+*.pdsprj.lock
+Backup of *
+~$*
+*.tmp
+
+# Claves y secretos (NUNCA subir la API key de ProPilot)
+.env
+*.key
+*secret*
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
