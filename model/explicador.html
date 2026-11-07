@@ -1,0 +1,148 @@
+<title>Cómo piensa el modelo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{--bg:#f5f4ef;--card:#fffdf8;--fg:#1d2420;--mut:#5d675f;--line:#d9d6c9;--acc:#0f766e;--warn:#c2410c;--ok:#2f7d32;--sig:#0f766e;--bar:#0f766e;--bar2:#c2410c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171a;--card:#1a2125;--fg:#e8ede9;--mut:#9aa8a0;--line:#2c373c;--acc:#4fd1c0;--warn:#fb923c;--ok:#7bd88a;--sig:#4fd1c0;--bar:#4fd1c0;--bar2:#fb923c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12171a;--card:#1a2125;--fg:#e8ede9;--mut:#9aa8a0;--line:#2c373c;--acc:#4fd1c0;--warn:#fb923c;--ok:#7bd88a;--sig:#4fd1c0;--bar:#4fd1c0;--bar2:#fb923c;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 "IBM Plex Sans",system-ui,sans-serif;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:600 28px/1.2 "IBM Plex Mono",monospace;margin:0;text-wrap:balance}
+h2{font:600 18px/1.3 "IBM Plex Mono",monospace;margin:0 0 6px;text-wrap:balance}
+p{margin:0 0 8px;max-width:65ch}
+.sub{color:var(--mut)}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.num{display:inline-block;background:var(--acc);color:var(--bg);font:600 13px "IBM Plex Mono",monospace;border-radius:4px;padding:1px 7px;margin-right:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:500 14px "IBM Plex Sans",sans-serif;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+label{font-size:14px;color:var(--mut)}
+input[type=range]{width:min(260px,100%);accent-color:var(--acc)}
+svg{width:100%;height:auto;display:block}
+.wrap{overflow-x:auto}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
+.kv div{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:13px "IBM Plex Mono",monospace;min-width:0}
+.kv b{display:block;font-size:11px;color:var(--mut);font-weight:500}
+.verdict{font:600 15px "IBM Plex Mono",monospace;padding:8px 10px;border-radius:6px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+th{font:600 12px "IBM Plex Mono",monospace;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.bad{color:var(--warn);font-weight:600}.good{color:var(--ok);font-weight:600}
+.note{font-size:13px;color:var(--mut)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<main>
+<header>
+<h1>Cómo piensa el modelo de rodamientos</h1>
+<p class="sub">Del temblor del motor a una decisión: sano, pista interna, bola o pista externa. Las señales de esta página son ilustrativas (sintéticas); los resultados de la última sección sí son los reales.</p>
+</header>
+
+<section id="s1">
+<h2><span class="num">1</span>La señal se corta en ventanas</h2>
+<p>El acelerómetro IIS3DWB mide la vibración muchas veces por segundo. El modelo no mira todo de golpe: toma un tramo de <b>1024 muestras</b> (unos 77 milisegundos) y decide sobre ese tramo.</p>
+<div class="row" id="stateBtns" role="group" aria-label="Estado del rodamiento"></div>
+<svg id="wave" viewBox="0 0 700 150" role="img" aria-label="Señal de vibración con una ventana deslizante"></svg>
+<p class="note">Una falla en la pista golpea una vez por vuelta: aparecen picos que un rodamiento sano no tiene.</p>
+</section>
+
+<section id="s2">
+<h2><span class="num">2</span>De cada ventana salen 22 números</h2>
+<p>6 describen la forma de la señal y 16 dicen cuánta energía hay en cada banda de frecuencia (se calculan con la FFT, Fast Fourier Transform, la transformada rápida de Fourier). Son lo único que ve la red neuronal.</p>
+<div class="kv" id="kv"></div>
+<div class="row"><span class="sub" style="font-size:14px">Escala de las barras:</span>
+<button id="bLin" aria-pressed="true">Lineal (original)</button><button id="bLog" aria-pressed="false">Logarítmica (corregida)</button></div>
+<svg id="bands" viewBox="0 0 700 150" role="img" aria-label="Energía en 16 bandas de frecuencia"></svg>
+<p class="note">RMS = Root Mean Square (valor eficaz), qué tan fuerte vibra. Curtosis = qué tan picuda es la señal.</p>
+</section>
+
+<section id="s3">
+<h2><span class="num">3</span>Por qué el ruido lo engañaba</h2>
+<p>Sube el ruido del sensor y mira las barras de la sección 2. En escala lineal, las bandas de alta frecuencia valen casi cero y el ruido las dispara a un valor enorme. El modelo lo lee como "falla fuerte". En logaritmo, el salto es mucho menor.</p>
+<div class="row"><label for="noise">Ruido del sensor</label><input id="noise" type="range" min="0" max="100" value="0"><span id="nv" class="sub"></span></div>
+<div class="verdict" id="vd"></div>
+<p class="note">SNR = Signal-to-Noise Ratio (relación señal a ruido). Menos dB = más ruido.</p>
+</section>
+
+<section id="s4">
+<h2><span class="num">4</span>Por qué importa la frecuencia de muestreo</h2>
+<p>Cada banda cubre un pedazo del rango de frecuencias que depende de cuántas muestras por segundo tomas. Un golpe de falla a <b>3,000 Hz</b> cae en una banda distinta según la frecuencia a la que se midió.</p>
+<div class="row" id="fsBtns" role="group" aria-label="Frecuencia de muestreo"></div>
+<svg id="fsv" viewBox="0 0 700 90" role="img" aria-label="Banda donde cae un tono de 3000 Hz"></svg>
+<p id="fsTxt" class="note"></p>
+</section>
+
+<section id="s5">
+<h2><span class="num">5</span>Resultados reales</h2>
+<p>Entrenado con las cargas de 0, 1 y 2 HP; probado con 3 HP (datos nuevos). "Antes" es el modelo original con 12 kHz; "después" es la copia corregida.</p>
+<div class="wrap"><table id="tbl"></table></div>
+<p class="note">Todos son datos de laboratorio (CWRU, Case Western Reserve University). El ruido de 0 dB nunca se vio en el entrenamiento, así que es la prueba más honesta. Con el sensor real habrá que medir otra vez.</p>
+</section>
+</main>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+// ---- estado ----
+const STATES=[["sano","Sano"],["pista_int","Pista interna"],["bola","Bola"],["pista_ext","Pista externa"]];
+let state=0,mode="lin",noise=0,fs=13333,t=0;
+const N=256;
+// generador determinista de ruido
+function rnd(i){const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+function gauss(i){return (rnd(i)+rnd(i+999)+rnd(i+1999)+rnd(i+2999)-2)*1.73}
+function sig(i,st){ // señal ilustrativa
+  const base=0.12*Math.sin(i*0.21)+0.06*Math.sin(i*0.53);
+  const per=[0,42,57,31][st],amp=[0,0.9,0.5,1.5][st];
+  let imp=0;if(per){const ph=((i%per)+per)%per;imp=amp*Math.exp(-ph/4)*Math.sin(ph*1.7)}
+  return base+imp+0.04*gauss(i)
+}
+function windowData(off,st,nz){const w=[];for(let i=0;i<N;i++){w.push(sig(off+i,st)+nz*gauss(off*3+i+5000))}return w}
+function dft(w){const m=w.reduce((a,b)=>a+b,0)/w.length;const out=[];for(let k=1;k<N/2;k++){let re=0,im=0;for(let n=0;n<N;n++){const h=0.5-0.5*Math.cos(2*Math.PI*n/(N-1));const v=(w[n]-m)*h;re+=v*Math.cos(2*Math.PI*k*n/N);im-=v*Math.sin(2*Math.PI*k*n/N)}out.push((re*re+im*im)/(N*N))}return out}
+function bands(w){const s=dft(w),b=[],per=Math.floor(s.length/16);for(let i=0;i<16;i++){let e=0;for(let j=i*per;j<(i+1)*per;j++)e+=s[j];b.push(e)}return b}
+function stats(w){const m=w.reduce((a,b)=>a+b,0)/N,x=w.map(v=>v-m);const rms=Math.sqrt(x.reduce((a,b)=>a+b*b,0)/N),pk=Math.max(...x.map(Math.abs));const s2=x.reduce((a,b)=>a+b*b,0)/N,k=x.reduce((a,b)=>a+b**4,0)/N/(s2*s2)-3,sk=x.reduce((a,b)=>a+b**3,0)/N/Math.pow(s2,1.5);return{rms,pk,cf:pk/rms,k,sk,sd:Math.sqrt(s2)}}
+// ---- botones ----
+STATES.forEach(([k,l],i)=>{const b=document.createElement("button");b.textContent=l;b.setAttribute("aria-pressed",i==state);b.onclick=()=>{state=i;[...$("stateBtns").children].forEach((c,j)=>c.setAttribute("aria-pressed",j==i))};$("stateBtns").appendChild(b)});
+$("bLin").onclick=()=>{mode="lin";$("bLin").setAttribute("aria-pressed",true);$("bLog").setAttribute("aria-pressed",false)};
+$("bLog").onclick=()=>{mode="log";$("bLog").setAttribute("aria-pressed",true);$("bLin").setAttribute("aria-pressed",false)};
+$("noise").oninput=e=>{noise=+e.target.value/100*0.5};
+[[12000,"12 kHz (CWRU)"],[13333,"13.3 kHz (sensor ÷ 2)"],[26667,"26.7 kHz (sensor completo)"]].forEach(([f,l])=>{const b=document.createElement("button");b.textContent=l;b.setAttribute("aria-pressed",f==fs);b.onclick=()=>{fs=f;[...$("fsBtns").children].forEach(c=>c.setAttribute("aria-pressed",c===b));drawFs()};$("fsBtns").appendChild(b)});
+// ---- dibujo ----
+function drawWave(){const s=$("wave");s.innerHTML="";const W=700,H=150,L=350,off=Math.floor(t*60);
+  el("line",{x1:0,x2:W,y1:H/2,y2:H/2,stroke:css("--line"),"stroke-width":1},s);
+  let d="";for(let i=0;i<L;i++){const v=sig(off+i,state)+noise*gauss((off+i)*3+5000);d+=(i?"L":"M")+(i*2)+","+(H/2-v*55).toFixed(1)}
+  el("path",{d,fill:"none",stroke:css("--sig"),"stroke-width":1.5},s);
+  const wx=140,ww=N*2*(350/512);
+  el("rect",{x:wx,y:8,width:ww,height:H-16,fill:css("--acc"),opacity:.12,stroke:css("--acc"),"stroke-dasharray":"4 3"},s);
+  const tx=el("text",{x:wx+6,y:22,fill:css("--acc"),"font-size":12,"font-family":"IBM Plex Mono,monospace"},s);tx.textContent="ventana: 1024 muestras";}
+function drawFeat(){const w=windowData(Math.floor(t*60)+140/2,state,noise),st=stats(w);
+  const items=[["RMS",st.rms],["Pico",st.pk],["Cresta",st.cf],["Curtosis",st.k],["Asimetría",st.sk],["Desv. est.",st.sd]];
+  $("kv").innerHTML=items.map(([n,v])=>`<div><b>${n}</b>${v.toFixed(2)}</div>`).join("");
+  const b=bands(w),s=$("bands");s.innerHTML="";const W=700,H=150,bw=W/16;
+  const base=bands(windowData(Math.floor(t*60)+140/2,state,0));
+  const f=mode=="lin"?(v=>v):(v=>Math.log10(v+1e-9));
+  const arr=b.map(f),ref=base.map(f);
+  let lo,hi;if(mode=="lin"){lo=0;hi=Math.max(...ref,...arr,1e-6)}else{lo=-9;hi=Math.max(...ref,...arr,-3)}
+  const sc=v=>Math.max(0,(v-lo)/(hi-lo))*(H-34);
+  arr.forEach((v,i)=>{el("rect",{x:i*bw+4,y:H-18-sc(v),width:bw-8,height:Math.max(1,sc(v)),fill:css("--bar"),rx:2},s);
+    el("rect",{x:i*bw+4,y:H-18-sc(ref[i]),width:bw-8,height:2,fill:css("--fg"),opacity:.5},s);
+    const tt=el("text",{x:i*bw+bw/2,y:H-4,"text-anchor":"middle","font-size":10,fill:css("--mut"),"font-family":"IBM Plex Mono,monospace"},s);tt.textContent=i+1});
+  const hint=el("text",{x:W-4,y:12,"text-anchor":"end","font-size":11,fill:css("--mut"),"font-family":"IBM Plex Mono,monospace"},s);hint.textContent="barras = energía por banda (1 = grave → 16 = aguda) · raya = sin ruido";
+  // veredicto de ruido
+  const bl=bands(windowData(Math.floor(t*60)+70,state,0)),hiIdx=[12,13,14,15];
+  const rl=hiIdx.reduce((a,i)=>a+b[i]/(bl[i]+1e-12),0)/4;
+  const rg=hiIdx.reduce((a,i)=>a+(Math.log10(b[i]+1e-9)-Math.log10(bl[i]+1e-9)),0)/4;
+  const nv=$("nv"),vd=$("vd");nv.textContent=noise==0?"sin ruido":"SNR aprox. "+Math.round(20-noise*40)+" dB";
+  if(noise<0.02){vd.textContent="Sin ruido: las bandas agudas valen lo normal.";vd.style.color=css("--ok")}
+  else{vd.innerHTML=`Bandas agudas: <span class="bad">×${rl<1e3?rl.toFixed(0):rl.toExponential(1)}</span> en escala lineal, <span class="good">+${rg.toFixed(1)} décadas</span> en logarítmica.`;vd.style.color=""}}
+function drawFs(){const s=$("fsv");s.innerHTML="";const W=700,bw=W/16,bandW=fs/2/16,idx=Math.min(15,Math.floor(3000/bandW));
+  for(let i=0;i<16;i++){el("rect",{x:i*bw+3,y:10,width:bw-6,height:34,fill:i==idx?css("--bar2"):"transparent",stroke:css("--line"),rx:3},s);
+    const lt=el("text",{x:i*bw+bw/2,y:66,"text-anchor":"middle","font-size":10,fill:css("--mut"),"font-family":"IBM Plex Mono,monospace"},s);lt.textContent=Math.round(i*bandW)+"";}
+  const a=el("text",{x:i=0,y:84,"font-size":11,fill:css("--mut"),"font-family":"IBM Plex Mono,monospace"},s);a.textContent="Hz donde empieza cada banda";
+  $("fsTxt").textContent=`Con ${fs} muestras por segundo, cada banda mide ${bandW.toFixed(0)} Hz de ancho: el tono de 3,000 Hz enciende la banda ${idx+1}. Si el modelo aprendió a 12 kHz (banda 9), con otra frecuencia mira la banda equivocada.`}
+// ---- resultados (se rellena) ----
+const RES=[["Datos limpios","100 %","100 %"],["Ruido suave (20 dB)","14 %","100 %"],["Ruido medio (10 dB)","14 %","100 %"],["Ruido fuerte (5 dB)","14 %","100 %"],["Ruido extremo (0 dB, no entrenado)","14 %","98.9 %"],["Ganancia ×0.5","44 %","100 %"],["Ganancia ×2","88 %","99.9 %"],["Sensor a 26.7 kHz sin ajustar","71 %","— (se usa 13.3 kHz)"]];
+$("tbl").innerHTML="<tr><th>Prueba</th><th>Antes</th><th>Después</th></tr>"+RES.map(r=>`<tr><td>${r[0]}</td><td class="bad">${r[1]}</td><td class="good">${r[2]}</td></tr>`).join("");
+// ---- animación ----
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function frame(){if(!reduce)t+=0.016;drawWave();drawFeat();requestAnimationFrame(frame)}
+drawFs();frame();
+</script>
