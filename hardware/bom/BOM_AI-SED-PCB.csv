@@ -1,0 +1,20 @@
+﻿Item,Qty,Reference(s),Value / Part,Description,Footprint (package),Manufacturer,Manufacturer part number / notes
+1,1,U1,STM32F411CE,"ARM Cortex-M4F microcontroller, 100 MHz, 512 KB flash, 128 KB RAM",QFN50P700X700X60-49,STMicroelectronics,STM32F411CE (QFN48 variant; exact ordering code to be confirmed)
+2,1,U2,LM2596S-3.3,3.3 V 3 A step-down (buck) switching regulator,VREG_LM2596S33NOPB (TO-263),Texas Instruments,LM2596S-3.3/NOPB
+3,1,U3,IIS3DWB,3-axis wide-bandwidth digital MEMS vibration sensor (SPI),LGA14_IIS3DWB,STMicroelectronics,IIS3DWB
+4,1,U4,ESP32-C3-MINI-1-N4,Wi-Fi / Bluetooth LE module (communication),XCVR_ESP32C3MINI1N4,Espressif Systems,ESP32-C3-MINI-1-N4
+5,1,L1,33 uH (330),Power inductor for the buck converter,IND_SRN6045TA330M,Bourns,SRN6045TA330M
+6,1,D2,1N5819H,"Schottky diode, input reverse-polarity protection",DIOAD1036W78L470D235,Taiwan Semiconductor,1N5819H
+7,1,D3,SS34,Schottky catch diode for the buck converter,DIOM7959X265N (SMC/DO-214AB),ON Semiconductor,SS34
+8,1,D1,LED red,Status LED (with RLED 330 ohm),LED,,to be selected
+9,1,CIN,680 uF,"Electrolytic capacitor, buck input",ELEC-RAD10,,to be selected (voltage rating >= 25 V recommended)
+10,1,COUT,470 uF,"Electrolytic capacitor, buck output",ELEC-RAD10,,"to be selected (low-ESR, >= 10 V)"
+11,2,"C1, C_ESP1",10 uF,Ceramic capacitor,0805_CAP,,to be selected
+12,8,"C_ESP2, C_NRST, C_SENS1, C_SENS2, C_VDDA1, C_VDD1, C_VDD2, C_VDD3",100 nF,Ceramic decoupling capacitor,0805 (footprint named 0805_CAP / 0805_RES in the library; same 0805 size),,to be selected
+13,2,"CV, C_BULK",4.7 uF,Ceramic capacitor (VCAP / bulk),0805 (0805_CAP / 0805_RES),,to be selected
+14,1,C_VDDA2,1 uF,Ceramic capacitor (VDDA filter),0805_CAP,,to be selected
+15,3,"RBOOT, R_EN, R_IO2",10 k,"Resistor (BOOT0 pull-down, ESP32 EN and IO2 pull-ups)",0805_RES,,to be selected
+16,1,RLED,330 ohm,"Resistor, LED current limit",0805_RES,,to be selected
+17,2,"J1, J4",CONN-SIL5,"5-pin header (J1: SWD programming, J4: ESP32 UART/EN/IO9)",CONN-SIL5,,to be selected
+18,1,J2,CONN-SIL3,3-pin header (UART),CONN-SIL3,,to be selected
+19,1,J3,CONN-SIL2,2-pin header (power input VIN/GND),CONN-SIL2,,to be selected
