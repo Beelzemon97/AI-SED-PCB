@@ -52,7 +52,6 @@ model/              Modelo TinyML (entrenado con CWRU)
 
 ## Pendientes
 
-- [ ] Generar y revisar Gerber y taladros
 - [ ] Lista de materiales (BOM)
 - [ ] Firmware: lectura SPI del IIS3DWB y ventanas de muestras
 - [ ] Integrar el modelo de IA del equipo (formato y tamaño por confirmar)
