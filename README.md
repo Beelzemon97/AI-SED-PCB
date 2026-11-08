@@ -50,6 +50,12 @@ firmware/           Código del STM32
 model/              Modelo TinyML (entrenado con CWRU)
 ```
 
+## Pendientes
+
+Firmware del ESP32-C3 (comunicación) sin escribir.
+Controlador del sensor IIS3DWB por SPI.
+Fabricación de la placa y pruebas en hardware real (el firmware solo se ha probado en emulador y en Proteus).
+
 ## Herramientas
 
 Proteus 9 (ISIS y ARES).
