@@ -50,13 +50,6 @@ firmware/           Código del STM32
 model/              Modelo TinyML (entrenado con CWRU)
 ```
 
-## Pendientes
-
-- [ ] Lista de materiales (BOM)
-- [ ] Firmware: lectura SPI del IIS3DWB y ventanas de muestras
-- [ ] Integrar el modelo de IA del equipo (formato y tamaño por confirmar)
-- [ ] Definir frecuencia de muestreo: el sensor entrega 26.667 kHz y el modelo se entrenó con CWRU a 12 kHz
-
 ## Herramientas
 
 Proteus 9 (ISIS y ARES).
